@@ -1,0 +1,7 @@
+---
+# defaults file for ansible-etcd-ca
+openssl: "openssl"
+kubernetes_ca_depot: "/var/lib/kubernetes-ca/depot"
+kubernetes_master_group: None
+local_certs: "certs"
+kubernetes_service_addresses: "172.21.0.0/16"

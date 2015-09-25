@@ -1,0 +1,86 @@
+---
+# tasks file for kubernetes-ca
+- name: make sure kubernetes-ca depot exists
+  file: path={{kubernetes_ca_depot}} mode=0755 state=directory
+
+- name: create cluster root ca key
+  shell: >
+    {{openssl}} genrsa -out {{kubernetes_ca_depot}}/ca-key.pem 2048
+    creates={{kubernetes_ca_depot}}/ca-key.pem
+
+- name: create cluster root ca 
+  shell: >
+    {{openssl}} req -x509 -new -nodes -days 10000
+    -key {{kubernetes_ca_depot}}/ca-key.pem
+    -out {{kubernetes_ca_depot}}/ca.pem
+    -subj "/CN=kube-ca"
+    creates={{kubernetes_ca_depot}}/ca.pem
+
+- name: create openssl.cnf
+  template: src=openssl.cnf.j2 dest={{kubernetes_ca_depot}}/openssl.cnf
+
+- name: slurp openssl.cnf content
+  slurp:
+    src: "{{kubernetes_ca_depot}}/openssl.cnf"
+  register: openssl_cnf
+  run_once: true
+
+- name: record openssl.cnf hash
+  set_fact:
+    openssl_cnf_sha1: "{{ openssl_cnf.content | hash('sha1') }}"
+
+- name: generate apiserver key
+  shell: >
+    {{openssl}} genrsa -out {{kubernetes_ca_depot}}/apiserver-key.pem 2048
+    creates={{kubernetes_ca_depot}}/apiserver-key.pem
+
+- name: generate apiserver csr
+  shell: >
+    {{openssl}} req -new -key {{kubernetes_ca_depot}}/apiserver-key.pem
+    -out {{kubernetes_ca_depot}}/apiserver-{{openssl_cnf_sha1}}.csr -subj "/CN=kube-apiserver"
+    -config {{kubernetes_ca_depot}}/openssl.cnf
+    creates={{kubernetes_ca_depot}}/apiserver-{{openssl_cnf_sha1}}.csr
+
+- name: generate apiserver crt
+  shell: >
+    {{openssl}} x509 -req -in {{kubernetes_ca_depot}}/apiserver-{{openssl_cnf_sha1}}.csr
+    -CA {{kubernetes_ca_depot}}/ca.pem -CAkey {{kubernetes_ca_depot}}/ca-key.pem
+    -CAcreateserial -out {{kubernetes_ca_depot}}/apiserver-{{openssl_cnf_sha1}}.pem -days 3650
+    -extensions v3_req -extfile {{kubernetes_ca_depot}}/openssl.cnf
+    creates={{kubernetes_ca_depot}}/apiserver-{{openssl_cnf_sha1}}.pem
+
+- name: generate worker key
+  shell: >
+    {{openssl}} genrsa -out {{kubernetes_ca_depot}}/worker-key.pem 2048
+    creates={{kubernetes_ca_depot}}/worker-key.pem
+
+- name: generate worker csr
+  shell: >
+    {{openssl}} req -new -key {{kubernetes_ca_depot}}/worker-key.pem
+    -out {{kubernetes_ca_depot}}/worker.csr -subj "/CN=kube-worker"
+    creates={{kubernetes_ca_depot}}/worker.csr
+
+- name: generate worker crt
+  shell: >
+    {{openssl}} x509 -req -in {{kubernetes_ca_depot}}/worker.csr
+    -CA {{kubernetes_ca_depot}}/ca.pem -CAkey {{kubernetes_ca_depot}}/ca-key.pem
+    -CAcreateserial -out {{kubernetes_ca_depot}}/worker.pem -days 3650
+    creates={{kubernetes_ca_depot}}/worker.pem
+
+- name: generate admin key
+  shell: >
+    {{openssl}} genrsa -out {{kubernetes_ca_depot}}/admin-key.pem 2048
+    creates={{kubernetes_ca_depot}}/admin-key.pem
+
+- name: generate admin csr
+  shell: >
+    {{openssl}} req -new -key {{kubernetes_ca_depot}}/admin-key.pem
+    -out {{kubernetes_ca_depot}}/admin.csr -subj "/CN=kube-admin"
+    creates={{kubernetes_ca_depot}}/admin.csr
+
+- name: generate admin crt
+  shell: >
+    {{openssl}} x509 -req -in {{kubernetes_ca_depot}}/admin.csr
+    -CA {{kubernetes_ca_depot}}/ca.pem -CAkey {{kubernetes_ca_depot}}/ca-key.pem
+    -CAcreateserial -out {{kubernetes_ca_depot}}/admin.pem -days 3650
+    creates={{kubernetes_ca_depot}}/admin.pem

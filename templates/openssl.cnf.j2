@@ -1,0 +1,18 @@
+[req]
+req_extensions = v3_req
+distinguished_name = req_distinguished_name
+[req_distinguished_name]
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = kubernetes
+DNS.2 = kubernetes.default
+DNS.3 = kubernetes.svc
+IP.1 = {{ kubernetes_service_addresses|ipaddr('net')|ipaddr(1)|ipaddr('address') }}
+{% if kubernetes_master_group %}
+  {%- for host in groups[kubernetes_master_group] -%}
+IP.{{loop.index + 1}} = {{ hostvars[host].ansible_default_ipv4.address }}
+  {%- endfor -%}
+{% endif %}
