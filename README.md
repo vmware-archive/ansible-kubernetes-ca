@@ -1,7 +1,7 @@
 kubernetes-ca
 =============
 
-current version: 0.0.0
+current version: 0.0.1
 A role to create/use openssl to generate certificates for kubernetes nodes
 
 Role Variables
