@@ -84,3 +84,34 @@
     -CA {{kubernetes_ca_depot}}/ca.pem -CAkey {{kubernetes_ca_depot}}/ca-key.pem
     -CAcreateserial -out {{kubernetes_ca_depot}}/admin.pem -days 3650
     creates={{kubernetes_ca_depot}}/admin.pem
+
+- name: create client ca key
+  shell: >
+    {{openssl}} genrsa -out {{kubernetes_ca_depot}}/client-ca-key.pem 2048
+    creates={{kubernetes_ca_depot}}/client-ca-key.pem
+
+- name: create client ca pem
+  shell: >
+    {{openssl}} req -x509 -new -nodes -days 10000
+    -key {{kubernetes_ca_depot}}/client-ca-key.pem
+    -out {{kubernetes_ca_depot}}/client-ca.pem
+    -subj "/CN=kube-client-ca"
+    creates={{kubernetes_ca_depot}}/client-ca.pem
+
+- name: generate client key
+  shell: >
+    {{openssl}} genrsa -out {{kubernetes_ca_depot}}/client-key.pem 2048
+    creates={{kubernetes_ca_depot}}/client-key.pem
+
+- name: generate client csr
+  shell: >
+    {{openssl}} req -new -key {{kubernetes_ca_depot}}/client-key.pem
+    -out {{kubernetes_ca_depot}}/client.csr -subj "/CN=apiserver-client"
+    creates={{kubernetes_ca_depot}}/client.csr
+
+- name: generate client crt
+  shell: >
+    {{openssl}} x509 -req -in {{kubernetes_ca_depot}}/client.csr
+    -CA {{kubernetes_ca_depot}}/client-ca.pem -CAkey {{kubernetes_ca_depot}}/client-ca-key.pem
+    -CAcreateserial -out {{kubernetes_ca_depot}}/client.pem -days 3650
+    creates={{kubernetes_ca_depot}}/client.pem
