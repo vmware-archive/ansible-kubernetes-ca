@@ -115,3 +115,25 @@
     -CA {{kubernetes_ca_depot}}/client-ca.pem -CAkey {{kubernetes_ca_depot}}/client-ca-key.pem
     -CAcreateserial -out {{kubernetes_ca_depot}}/client.pem -days 3650
     creates={{kubernetes_ca_depot}}/client.pem
+
+- name: generate webhook key
+  shell: >
+    {{openssl}} genrsa -out {{kubernetes_ca_depot}}/webhook-key.pem 2048
+    creates={{kubernetes_ca_depot}}/webhook-key.pem
+  when: generate_webhook_certs
+
+- name: generate webook csr
+  shell: >
+    {{openssl}} req -new -key {{kubernetes_ca_depot}}/webhook-key.pem
+    -out {{kubernetes_ca_depot}}/webhook.csr -subj "/CN=*.{{webhook_ns}}.svc"
+    creates={{kubernetes_ca_depot}}/webhook.csr
+  when: generate_webhook_certs
+
+- name: generate webhook crt
+  shell: >
+    {{openssl}} x509 -req -in {{kubernetes_ca_depot}}/webhook.csr
+    -CA {{kubernetes_ca_depot}}/ca.pem -CAkey {{kubernetes_ca_depot}}/ca-key.pem
+    -CAcreateserial -out {{kubernetes_ca_depot}}/webhook.pem -days 3650
+    creates={{kubernetes_ca_depot}}/webhook.pem
+  when: generate_webhook_certs
+
