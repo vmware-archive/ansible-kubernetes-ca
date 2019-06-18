@@ -26,4 +26,8 @@ If deploying master nodes in HA configuration, following variables can be specif
 License
 -------
 
-MIT
+Copyright 2015 VMware, Inc.  All rights reserved.
+
+SPDX-License-Identifier: MIT OR GPL-3.0-only
+
+This code is Dual Licensed MIT or GPLv3
