@@ -9,7 +9,11 @@ subjectAltName = @alt_names
 [alt_names]
 DNS.1 = kubernetes
 DNS.2 = kubernetes.default
-DNS.3 = kubernetes.svc
+DNS.3 = kubernetes.default.svc
+DNS.4 = kubernetes.default.svc.cluster
+DNS.5 = kubernetes.default.svc.cluster.local
+DNS.6 = kubernetes.svc
+DNS.7 = kubernetes.svc.cluster.local
 IP.1 = {{ kubernetes_service_addresses|ipaddr('net')|ipaddr(1)|ipaddr('address') }}
 {% if kubernetes_master_group %}
 {% set ip_last_index = 1 %}
@@ -20,9 +24,9 @@ IP.{{ ip_last_index + loop.index }} = {{ hostvars[host].ansible_default_ipv4.add
 IP.{{ ip_last_index + 1 + groups[kubernetes_master_group]|length }} = {{ kubernetes_master_elb_ip|ipv4 }}
 {% endif %}
 {% if kubernetes_master_elb_dns_name is defined %}
-DNS.4 = {{ kubernetes_master_elb_dns_name }}
+DNS.8 = {{ kubernetes_master_elb_dns_name }}
 {% if kubernetes_master_elb_cname is defined %}
-DNS.5 = {{ kubernetes_master_elb_cname }}
+DNS.9 = {{ kubernetes_master_elb_cname }}
 {% endif %}
 {% endif %}
 {% endif %}
