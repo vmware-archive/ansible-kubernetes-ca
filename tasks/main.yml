@@ -51,6 +51,29 @@
     -extensions v3_req -extfile {{kubernetes_ca_depot}}/openssl.cnf
     creates={{kubernetes_ca_depot}}/apiserver-{{openssl_cnf_sha1}}.pem
 
+- name: create kube-apiserver-kubelet-client-ext.conf
+  template: src=kube-apiserver-kubelet-client-ext.conf.j2 dest={{kubernetes_ca_depot}}/kube-apiserver-kubelet-client-ext.conf
+
+- name: generate apiserver kubelet client key
+  shell: >
+    {{openssl}} genrsa -out {{kubernetes_ca_depot}}/kube-apiserver-kubelet-client-key.pem 2048
+    creates={{kubernetes_ca_depot}}/kube-apiserver-kubelet-client-key.pem
+
+- name: generate apiserver kubelet client csr
+  shell: >
+    {{openssl}} req -new -key {{kubernetes_ca_depot}}/kube-apiserver-kubelet-client-key.pem
+    -out {{kubernetes_ca_depot}}/kube-apiserver-kubelet-client.csr
+    -subj "/O=system:masters/CN=kube-apiserver-kubelet-client"
+    creates={{kubernetes_ca_depot}}/kube-apiserver-kubelet-client.csr
+
+- name: generate apiserver kubelet client certificate
+  shell: >
+    {{openssl}} x509 -req -in {{kubernetes_ca_depot}}/kube-apiserver-kubelet-client.csr
+    -CA {{kubernetes_ca_depot}}/ca.pem -CAkey {{kubernetes_ca_depot}}/ca-key.pem
+    -CAcreateserial -out {{kubernetes_ca_depot}}/kube-apiserver-kubelet-client.pem -days 3650
+    -extensions v3_ca -extfile {{kubernetes_ca_depot}}/kube-apiserver-kubelet-client-ext.conf
+    creates={{kubernetes_ca_depot}}/kube-apiserver-kubelet-client.pem
+
 - name: generate worker key
   shell: >
     {{openssl}} genrsa -out {{kubernetes_ca_depot}}/worker-key.pem 2048
